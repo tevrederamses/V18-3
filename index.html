@@ -459,7 +459,7 @@ async function init(){
     }
     setStatus("");
   }catch(e){
-    setStatus("Let op: niet verbonden met de gedeelde lijst. Open de pagina via de echte link online, anders wordt niets gedeeld met andere ouders.");
+    setStatus("Niet verbonden met de gedeelde lijst (" + e.message + "). Je kunt wel lokaal aanvinken.");
   }
   renderChildNames();
   renderEvents();
