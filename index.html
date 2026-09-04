@@ -140,6 +140,7 @@
     padding:1px 8px;
   }
   .event.wedstrijd .teller{background:var(--red-dim);}
+  .nav-link{color:var(--red);font-weight:bold;text-decoration:underline;}
 
   .toggle{
     display:flex;
@@ -223,7 +224,7 @@
 </div>
 
 <script>
-const KVDB_BASE = "https://kvdb.io";
+const BLOB_API = "https://jsonblob.com/api/jsonBlob";
 const params = new URLSearchParams(location.search);
 let blobId = params.get("poll");
 
@@ -283,6 +284,10 @@ if (eerstvolgendeWedstrijd){
     datum: wedstrijdDatum,
     tijd: eerstvolgendeWedstrijd.time,
     locatie: eerstvolgendeWedstrijd.location,
+    uit: !eerstvolgendeWedstrijd.home,
+    mapsUrl: !eerstvolgendeWedstrijd.home
+      ? "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(eerstvolgendeWedstrijd.location)
+      : null,
   });
 }
 
@@ -299,27 +304,31 @@ const eventsEl = document.getElementById('events');
 function setStatus(msg){ statusEl.textContent = msg; }
 
 async function createBlob(){
-  const res = await fetch(KVDB_BASE + "/", {
+  const res = await fetch(BLOB_API, {
     method:"POST",
-    headers:{"Content-Type":"application/x-www-form-urlencoded"},
-    body:"email=noreply@tevrederamses.example"
+    headers:{"Content-Type":"application/json","Accept":"application/json"},
+    body: JSON.stringify(data)
   });
-  if(!res.ok) throw new Error("aanmaken mislukt");
-  const id = (await res.text()).trim();
+  if(!res.ok){
+    let tekst = "";
+    try{ tekst = await res.text(); }catch(e){}
+    throw new Error("aanmaken mislukt: status " + res.status + " " + tekst);
+  }
+  const loc = res.headers.get("Location");
+  const id = loc.split("/").pop();
   return id;
 }
 
 async function loadBlob(id){
-  const res = await fetch(KVDB_BASE + "/" + id + "/data");
-  if(res.status === 404) return { children: [], attendance: {} };
-  if(!res.ok) throw new Error("niet gevonden");
-  const tekst = await res.text();
-  try{ return JSON.parse(tekst); }catch(e){ return { children: [], attendance: {} }; }
+  const res = await fetch(BLOB_API + "/" + id, {headers:{"Accept":"application/json"}});
+  if(!res.ok) throw new Error("niet gevonden: status " + res.status);
+  return await res.json();
 }
 
 async function saveBlob(){
-  const res = await fetch(KVDB_BASE + "/" + blobId + "/data", {
-    method:"POST",
+  const res = await fetch(BLOB_API + "/" + blobId, {
+    method:"PUT",
+    headers:{"Content-Type":"application/json","Accept":"application/json"},
     body: JSON.stringify(data)
   });
   if(!res.ok){
@@ -384,7 +393,7 @@ function renderEvents(){
           </div>
           <span class="teller">${komers.length}</span>
         </div>
-        <div class="datum">${fmt(ev.datum)}${ev.tijd ? " · " + ev.tijd : ""}${ev.locatie ? "<br>" + ev.locatie : ""}</div>
+        <div class="datum">${fmt(ev.datum)}${ev.tijd ? " · " + ev.tijd : ""}${ev.locatie ? "<br>" + ev.locatie : ""}${ev.mapsUrl ? ` · <a class="nav-link" href="${ev.mapsUrl}" target="_blank" rel="noopener">Navigeer</a>` : ""}</div>
       </div>
       <div class="toggle">
         <button class="komt ${komtActive?'active':''}" ${!currentChild?'disabled':''} data-key="${ev.key}" data-val="true">Komt</button>
