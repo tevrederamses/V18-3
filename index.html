@@ -256,6 +256,18 @@ function volgendeDag(vanaf, doelDag){
   d.setHours(0,0,0,0);
   return d;
 }
+
+function ditWeekDag(vanaf, doelDag){
+  const d = new Date(vanaf);
+  const daysSindsMaandag = (d.getDay() + 6) % 7;
+  const maandag = new Date(d);
+  maandag.setDate(d.getDate() - daysSindsMaandag);
+  const offsetVanafMaandag = (doelDag + 6) % 7;
+  const target = new Date(maandag);
+  target.setDate(maandag.getDate() + offsetVanafMaandag);
+  target.setHours(0,0,0,0);
+  return target;
+}
 function fmt(d){
   return dagNamen[d.getDay()].replace(/^./, c=>c.toUpperCase()) + " " + d.getDate() + " " + maandNamen[d.getMonth()];
 }
@@ -286,8 +298,8 @@ function volgendeWedstrijd(){
 const eerstvolgendeWedstrijd = volgendeWedstrijd();
 
 const events = [
-  { key: iso(volgendeDag(vandaag,2)), type:"training", label:"Training", datum: volgendeDag(vandaag,2) },
-  { key: iso(volgendeDag(vandaag,5)), type:"training", label:"Training", datum: volgendeDag(vandaag,5) },
+  { key: iso(ditWeekDag(vandaag,2)), type:"training", label:"Training", datum: ditWeekDag(vandaag,2) },
+  { key: iso(ditWeekDag(vandaag,5)), type:"training", label:"Training", datum: ditWeekDag(vandaag,5) },
 ];
 
 if (eerstvolgendeWedstrijd){
