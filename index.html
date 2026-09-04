@@ -121,8 +121,7 @@
     justify-content:space-between;
     align-items:flex-start;
     margin-bottom:6px;
-    flex-wrap:wrap;
-    gap:6px;
+    gap:8px;
   }
   .event-head .type{
     font-family:'Trebuchet MS', sans-serif;
@@ -135,20 +134,33 @@
     margin:0;
     font-size:0.95rem;
     font-weight:normal;
-    display:inline;
+    overflow-wrap:break-word;
   }
-  .event-head .titel-rij{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    flex-wrap:wrap;
+  .event-head .titel-blok{
+    flex:1 1 auto;
+    min-width:0;
+  }
+  .event-head .teller{
+    margin-left:6px;
+    vertical-align:middle;
   }
   .event-head .datum{
+    flex:0 0 auto;
+    max-width:42%;
     font-family:'Trebuchet MS', sans-serif;
-    font-size:0.72rem;
-    color:var(--muted);
     text-align:right;
     line-height:1.3;
+  }
+  .event-head .datum .dag{
+    display:block;
+    font-size:0.95rem;
+    font-weight:bold;
+    color:var(--text);
+  }
+  .event-head .datum .details{
+    display:block;
+    font-size:0.68rem;
+    color:var(--muted);
   }
 
   .teller{
@@ -156,12 +168,12 @@
     font-family:'Trebuchet MS', sans-serif;
     font-size:0.65rem;
     font-weight:bold;
-    color:var(--text);
-    background:var(--line);
+    color:#fff;
+    background:#57545c;
     border-radius:10px;
     padding:1px 8px;
   }
-  .event.wedstrijd .teller{background:var(--red-dim);}
+  .event.wedstrijd .teller{background:var(--red-dim);color:#fff;}
   .nav-link{color:var(--red);font-weight:bold;text-decoration:underline;}
 
   .toggle{
@@ -402,14 +414,14 @@ function renderEvents(){
 
     box.innerHTML = `
       <div class="event-head">
-        <div class="titel-rij">
-          <div>
-            <div class="type">${ev.type === "wedstrijd" ? "Wedstrijd" : "Training"}</div>
-            <h2>${ev.label}</h2>
-          </div>
-          <span class="teller">${komers.length}</span>
+        <div class="titel-blok">
+          <div class="type">${ev.type === "wedstrijd" ? "Wedstrijd" : "Training"}</div>
+          <h2>${ev.label}<span class="teller">✓ ${komers.length} · ✗ ${afmelders.length}</span></h2>
         </div>
-        <div class="datum">${fmt(ev.datum)}${ev.tijd ? " · " + ev.tijd : ""}${ev.locatie ? "<br>" + ev.locatie : ""}${ev.mapsUrl ? ` · <a class="nav-link" href="${ev.mapsUrl}" target="_blank" rel="noopener">Navigeer</a>` : ""}</div>
+        <div class="datum">
+          <span class="dag">${fmt(ev.datum)}</span>
+          <span class="details">${ev.tijd ? ev.tijd : ""}${ev.locatie ? (ev.tijd ? " · " : "") + ev.locatie : ""}${ev.mapsUrl ? ` · <a class="nav-link" href="${ev.mapsUrl}" target="_blank" rel="noopener">Navigeer</a>` : ""}</span>
+        </div>
       </div>
       <div class="toggle">
         <button class="komt ${komtActive?'active':''}" ${!currentChild?'disabled':''} data-key="${ev.key}" data-val="true">Komt</button>
