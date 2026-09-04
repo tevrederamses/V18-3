@@ -224,9 +224,13 @@
 </div>
 
 <script>
-const BLOB_API = "https://jsonblob.com/api/jsonBlob";
+const DB_URL = "https://v18-3-c3a0d-default-rtdb.europe-west1.firebasedatabase.app";
 const params = new URLSearchParams(location.search);
 let blobId = params.get("poll");
+
+function genId(){
+  return Math.random().toString(36).slice(2,10) + Math.random().toString(36).slice(2,6);
+}
 
 const dagNamen = ["zondag","maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag"];
 const maandNamen = ["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
@@ -303,32 +307,17 @@ const eventsEl = document.getElementById('events');
 
 function setStatus(msg){ statusEl.textContent = msg; }
 
-async function createBlob(){
-  const res = await fetch(BLOB_API, {
-    method:"POST",
-    headers:{"Content-Type":"application/json","Accept":"application/json"},
-    body: JSON.stringify(data)
-  });
-  if(!res.ok){
-    let tekst = "";
-    try{ tekst = await res.text(); }catch(e){}
-    throw new Error("aanmaken mislukt: status " + res.status + " " + tekst);
-  }
-  const loc = res.headers.get("Location");
-  const id = loc.split("/").pop();
-  return id;
-}
-
 async function loadBlob(id){
-  const res = await fetch(BLOB_API + "/" + id, {headers:{"Accept":"application/json"}});
+  const res = await fetch(DB_URL + "/aanwezigheid/" + id + ".json");
   if(!res.ok) throw new Error("niet gevonden: status " + res.status);
-  return await res.json();
+  const json = await res.json();
+  return json || { children: [], attendance: {} };
 }
 
 async function saveBlob(){
-  const res = await fetch(BLOB_API + "/" + blobId, {
+  const res = await fetch(DB_URL + "/aanwezigheid/" + blobId + ".json", {
     method:"PUT",
-    headers:{"Content-Type":"application/json","Accept":"application/json"},
+    headers:{"Content-Type":"application/json"},
     body: JSON.stringify(data)
   });
   if(!res.ok){
@@ -448,8 +437,7 @@ async function init(){
       data.attendance = geladen.attendance;
       data.children = Array.from(new Set([...VASTE_NAMEN, ...(geladen.children||[])]));
     } else {
-      setStatus("Nieuwe lijst aanmaken…");
-      blobId = await createBlob();
+      blobId = genId();
       const shareUrl = location.origin + location.pathname + "?poll=" + blobId;
       const box = document.getElementById('shareBox');
       const link = document.getElementById('shareLink');
