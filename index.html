@@ -10,17 +10,26 @@
     --panel:#242224;
     --line:#38363a;
     --paper:#f5f3f0;
+    --text:#f5f3f0;
     --ink:#221a14;
     --red:#c0001f;
     --red-dim:#7a0e1f;
     --muted:#a7a3a6;
     --ok:#3f8f52;
   }
+  body.light{
+    --black:#f3f1ec;
+    --panel:#ffffff;
+    --line:#ddd7cd;
+    --text:#221a14;
+    --muted:#6b645d;
+  }
+  body{transition:background 0.2s, color 0.2s;}
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{
     background:var(--black);
-    color:var(--paper);
+    color:var(--text);
     font-family: 'Georgia', 'Iowan Old Style', serif;
     min-height:100vh;
     padding: 0 0 60px;
@@ -40,13 +49,26 @@
     height:auto;
     flex-shrink:0;
   }
+  #themeToggle{
+    margin-left:auto;
+    flex-shrink:0;
+    font-family:'Trebuchet MS', sans-serif;
+    font-size:0.72rem;
+    font-weight:bold;
+    padding:5px 12px;
+    border-radius:12px;
+    border:1px solid var(--red);
+    background:transparent;
+    color:var(--text);
+    cursor:pointer;
+  }
   header h1{
     font-family: 'Futura', 'Trebuchet MS', sans-serif;
     font-weight:800;
     letter-spacing:0.5px;
     font-size:1.1rem;
     margin:0;
-    color:var(--paper);
+    color:var(--text);
   }
   header h1 span{color:var(--red);}
   header .sub{
@@ -134,7 +156,7 @@
     font-family:'Trebuchet MS', sans-serif;
     font-size:0.65rem;
     font-weight:bold;
-    color:var(--paper);
+    color:var(--text);
     background:var(--line);
     border-radius:10px;
     padding:1px 8px;
@@ -155,7 +177,7 @@
     border-radius:3px;
     border:1px solid var(--line);
     background:transparent;
-    color:var(--paper);
+    color:var(--text);
     cursor:pointer;
   }
   .toggle button.komt.active{background:var(--ok);border-color:var(--ok);color:#fff;}
@@ -170,7 +192,7 @@
     padding-top:5px;
     line-height:1.4;
   }
-  .lijst .naam{color:var(--paper);}
+  .lijst .naam{color:var(--text);}
   .lijst .naam.niet{color:var(--muted);text-decoration:line-through;}
 
   .status{
@@ -202,6 +224,7 @@
       <h1>V18<span>-3</span></h1>
       <div class="sub">MBCA Amstelveen · aanwezigheid</div>
     </div>
+    <button id="themeToggle" type="button">Dark</button>
   </header>
 
   <div class="whoami">
@@ -243,6 +266,7 @@ vandaag.setHours(0,0,0,0);
 
 // Competitieschema V18-3, seizoen 2026-2027 (bron: basketball.nl)
 const wedstrijdSchema = [
+  { date:"2026-09-05", time:"14:45", opponent:"V18-2 (toernooitje)", home:true, location:"Goudsmithal" },
   { date:"2026-09-12", time:"14:45", opponent:"CobraNova",       home:false, location:"Forum Kwadraat" },
   { date:"2026-09-19", time:"14:15", opponent:"Waterdragers",    home:true,  location:"Goudsmithal" },
   { date:"2026-10-03", time:"14:45", opponent:"DAS",             home:true,  location:"Goudsmithal" },
@@ -433,6 +457,19 @@ async function init(){
   renderChildNames();
   renderEvents();
 }
+
+const themeToggle = document.getElementById('themeToggle');
+function applyTheme(mode){
+  document.body.classList.toggle('light', mode === 'light');
+  themeToggle.textContent = mode === 'light' ? 'Light' : 'Dark';
+}
+let huidigThema = localStorage.getItem('theme') || 'dark';
+applyTheme(huidigThema);
+themeToggle.addEventListener('click', () => {
+  huidigThema = huidigThema === 'light' ? 'dark' : 'light';
+  localStorage.setItem('theme', huidigThema);
+  applyTheme(huidigThema);
+});
 
 init();
 </script>
