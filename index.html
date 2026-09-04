@@ -223,7 +223,7 @@
 </div>
 
 <script>
-const BLOB_API = "https://jsonblob.com/api/jsonBlob";
+const KVDB_BASE = "https://kvdb.io";
 const params = new URLSearchParams(location.search);
 let blobId = params.get("poll");
 
@@ -299,28 +299,30 @@ const eventsEl = document.getElementById('events');
 function setStatus(msg){ statusEl.textContent = msg; }
 
 async function createBlob(){
-  const res = await fetch(BLOB_API, {
+  const res = await fetch(KVDB_BASE + "/", {
     method:"POST",
-    headers:{"Content-Type":"application/json","Accept":"application/json"},
-    body: JSON.stringify(data)
+    headers:{"Content-Type":"application/x-www-form-urlencoded"},
+    body:"email=noreply@tevrederamses.example"
   });
-  const loc = res.headers.get("Location");
-  const id = loc.split("/").pop();
+  if(!res.ok) throw new Error("aanmaken mislukt");
+  const id = (await res.text()).trim();
   return id;
 }
 
 async function loadBlob(id){
-  const res = await fetch(BLOB_API + "/" + id, {headers:{"Accept":"application/json"}});
+  const res = await fetch(KVDB_BASE + "/" + id + "/data");
+  if(res.status === 404) return { children: [], attendance: {} };
   if(!res.ok) throw new Error("niet gevonden");
-  return await res.json();
+  const tekst = await res.text();
+  try{ return JSON.parse(tekst); }catch(e){ return { children: [], attendance: {} }; }
 }
 
 async function saveBlob(){
-  await fetch(BLOB_API + "/" + blobId, {
-    method:"PUT",
-    headers:{"Content-Type":"application/json","Accept":"application/json"},
+  const res = await fetch(KVDB_BASE + "/" + blobId + "/data", {
+    method:"POST",
     body: JSON.stringify(data)
   });
+  if(!res.ok) throw new Error("opslaan mislukt");
 }
 
 function renderChildNames(){
