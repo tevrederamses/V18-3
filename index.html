@@ -204,11 +204,6 @@
     </div>
   </header>
 
-  <div id="shareBox" class="share" style="display:none;">
-    Nieuwe lijst aangemaakt. Deel deze link met de ouders — dit is dé link die iedereen moet gebruiken:<br>
-    <a id="shareLink" href="#"></a>
-  </div>
-
   <div class="whoami">
     <label for="childInput">Speler:</label>
     <select id="childInput">
@@ -226,11 +221,7 @@
 <script>
 const DB_URL = "https://v18-3-c3a0d-default-rtdb.europe-west1.firebasedatabase.app";
 const params = new URLSearchParams(location.search);
-let blobId = params.get("poll");
-
-function genId(){
-  return Math.random().toString(36).slice(2,10) + Math.random().toString(36).slice(2,6);
-}
+let blobId = params.get("poll") || "v18-3-team";
 
 const dagNamen = ["zondag","maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag"];
 const maandNamen = ["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
@@ -430,21 +421,11 @@ nieuweNaamInput.addEventListener('input', renderEvents);
 async function init(){
   data.children = [...VASTE_NAMEN];
   try{
-    if(blobId){
-      setStatus("Laden…");
-      const geladen = await loadBlob(blobId);
-      if(!geladen.attendance) geladen.attendance = {};
-      data.attendance = geladen.attendance;
-      data.children = Array.from(new Set([...VASTE_NAMEN, ...(geladen.children||[])]));
-    } else {
-      blobId = genId();
-      const shareUrl = location.origin + location.pathname + "?poll=" + blobId;
-      const box = document.getElementById('shareBox');
-      const link = document.getElementById('shareLink');
-      link.href = shareUrl;
-      link.textContent = shareUrl;
-      box.style.display = "block";
-    }
+    setStatus("Laden…");
+    const geladen = await loadBlob(blobId);
+    if(!geladen.attendance) geladen.attendance = {};
+    data.attendance = geladen.attendance;
+    data.children = Array.from(new Set([...VASTE_NAMEN, ...(geladen.children||[])]));
     setStatus("");
   }catch(e){
     setStatus("Niet verbonden met de gedeelde lijst (" + e.message + "). Je kunt wel lokaal aanvinken.");
