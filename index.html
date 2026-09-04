@@ -322,7 +322,11 @@ async function saveBlob(){
     method:"POST",
     body: JSON.stringify(data)
   });
-  if(!res.ok) throw new Error("opslaan mislukt");
+  if(!res.ok){
+    let tekst = "";
+    try{ tekst = await res.text(); }catch(e){}
+    throw new Error("status " + res.status + " " + tekst);
+  }
 }
 
 function renderChildNames(){
@@ -409,7 +413,7 @@ function renderEvents(){
           await saveBlob();
           setStatus("Opgeslagen ✓");
         }catch(e){
-          setStatus("Opslaan mislukt, probeer opnieuw.");
+          setStatus("Opslaan mislukt: " + e.message);
         }
       });
     });
