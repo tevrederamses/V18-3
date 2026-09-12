@@ -207,6 +207,16 @@
     border-radius:8px;
     vertical-align:middle;
   }
+  .tafel-blok{
+    background:rgba(192,0,31,0.12);
+    border:1px solid var(--red);
+    border-radius:4px;
+    padding:6px 10px;
+    margin-bottom:8px;
+    font-size:0.82rem;
+    color:var(--text);
+  }
+
   .reden-input{
     width:100%;
     padding:6px 8px;
@@ -335,6 +345,15 @@ function volgendeWedstrijd(){
   return wedstrijdSchema.find(w => w.date >= vandaagIso) || null;
 }
 
+// Tafelrooster thuiswedstrijden — roulatie per speler, pas aan indien nodig
+const TAFELROOSTER = {
+  "2026-09-19": ["Angelina", "Annabelle"],
+  "2026-10-03": ["Esra", "Eva"],
+  "2026-11-21": ["Jovana", "Minne"],
+  "2026-12-06": ["Moira", "Senna"],
+  "2026-12-12": ["Angelina", "Annabelle"],
+};
+
 const eerstvolgendeWedstrijd = volgendeWedstrijd();
 
 const events = [
@@ -359,6 +378,7 @@ if (eerstvolgendeWedstrijd){
     mapsUrl: !eerstvolgendeWedstrijd.home
       ? "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(eerstvolgendeWedstrijd.location)
       : null,
+    tafel: eerstvolgendeWedstrijd.home ? (TAFELROOSTER[eerstvolgendeWedstrijd.date] || null) : null,
   });
 }
 
@@ -462,6 +482,7 @@ function renderEvents(){
         <button class="komt ${komtActive?'active':''}" ${!currentChild?'disabled':''} data-key="${ev.key}" data-val="true">Komt</button>
         <button class="niet ${nietActive?'active':''}" ${!currentChild?'disabled':''} data-key="${ev.key}" data-val="false">Komt niet</button>
       </div>
+      ${ev.tafel ? `<div class="tafel-blok">🗓️ Tafelen: ${ev.tafel.map(n=>"Ouder van "+n).join(" & ")}</div>` : ''}
       ${nietActive ? `<input class="reden-input" data-key="${ev.key}" placeholder="Reden (optioneel): ziek, blessure, vakantie…" value="${redenen[currentChild] ? redenen[currentChild].replace(/"/g,'&quot;') : ''}">` : ''}
       <div class="lijst">
         ${komers.length ? "Komen: " + komers.map(n=>`<span class="naam">${n}</span>`).join(", ") : "Nog niemand aangemeld."}
