@@ -34,6 +34,72 @@
     min-height:100vh;
     padding: 0 0 60px;
   }
+  .overname-toggle-btn{
+    display:block;
+    width:100%;
+    text-align:left;
+    background:rgba(217,164,4,0.1);
+    border:1px solid #d9a404;
+    border-radius:4px;
+    padding:10px 14px;
+    margin-bottom:14px;
+    font-family:'Trebuchet MS', sans-serif;
+    font-weight:bold;
+    font-size:0.95rem;
+    color:#d9a404;
+    cursor:pointer;
+  }
+  .overname-section{
+    background:rgba(217,164,4,0.1);
+    border:1px solid #d9a404;
+    border-radius:4px;
+    padding:12px 14px;
+    margin-bottom:14px;
+  }
+  .overname-titel{
+    font-family:'Trebuchet MS', sans-serif;
+    font-weight:bold;
+    font-size:1rem;
+    color:#d9a404;
+    margin-bottom:4px;
+  }
+  .overname-uitleg{
+    font-family:'Trebuchet MS', sans-serif;
+    font-size:0.85rem;
+    color:var(--muted);
+    margin-bottom:10px;
+  }
+  #overnameNaamInput{
+    width:100%;
+    padding:10px 12px;
+    margin-bottom:10px;
+    font-size:1.1rem;
+    font-family:'Georgia', serif;
+    border:1px solid var(--line);
+    border-radius:3px;
+    background:var(--paper);
+    color:var(--ink);
+  }
+  .overname-event{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:10px 12px;
+    margin-bottom:8px;
+  }
+  .overname-event:last-child{margin-bottom:0;}
+  .overname-event-head{
+    display:flex;
+    flex-direction:column;
+    margin-bottom:8px;
+  }
+  .overname-event-head strong{font-size:1.05rem;}
+  .overname-event-head span{
+    font-family:'Trebuchet MS', sans-serif;
+    font-size:0.85rem;
+    color:var(--muted);
+  }
+
   .wrap{max-width:700px;margin:0 auto;padding:0 16px;}
 
   header{
@@ -286,6 +352,15 @@
     <input id="nieuweNaamInput" placeholder="Typ de naam" autocomplete="off" style="display:none;">
   </div>
 
+  <button id="overnameToggle" type="button" class="overname-toggle-btn" style="display:none;">✈️ Overname 18–26 sep</button>
+
+  <div class="overname-section" id="overnameSection" style="display:none;">
+    <div class="overname-titel">✈️ Overname 18–26 sep (Ramses in Turkije)</div>
+    <div class="overname-uitleg">Marko en ouders: geef aan of je een training of wedstrijd in deze periode kan overnemen.</div>
+    <input id="overnameNaamInput" placeholder="Jouw naam (bijv. Marko of ouder van ...)" autocomplete="off">
+    <div id="overnameBlok"></div>
+  </div>
+
   <div id="events"></div>
 
   <div class="status" id="status">Laden…</div>
@@ -340,6 +415,86 @@ const wedstrijdSchema = [
   { date:"2026-12-12", time:"14:45", opponent:"NIEUW Generatie", home:true,  location:"Goudsmithal" },
 ];
 
+// Tijdelijke overname-pool: Ramses is 18-26 sep in Turkije, deze trainingen/
+// wedstrijd moeten overgenomen worden. Ouders + Marko kunnen aangeven of ze kunnen.
+const OVERNAME_TOT = "2026-09-26"; // sectie verdwijnt vanzelf na deze datum
+const OVERNAME_EVENTS = [
+  { key: "overname-2026-09-18", datum: "2026-09-18", label: "Training", tijd: "18:30", locatie: "Schaepmanlaan" },
+  { key: "overname-2026-09-19", datum: "2026-09-19", label: "Wedstrijd vs Waterdragers", tijd: "14:15", locatie: "Goudsmithal" },
+  { key: "overname-2026-09-22", datum: "2026-09-22", label: "Training", tijd: "18:30", locatie: "HWC court 1" },
+  { key: "overname-2026-09-25", datum: "2026-09-25", label: "Training", tijd: "18:30", locatie: "Schaepmanlaan" },
+];
+
+function fmtOvernameDatum(dateStr){
+  const d = new Date(dateStr + "T00:00:00");
+  return dagNamen[d.getDay()] + " " + d.getDate() + " " + maandNamen[d.getMonth()];
+}
+
+let overnameOpen = false;
+
+function renderOvername(){
+  const toggleBtn = document.getElementById('overnameToggle');
+  const sectionEl = document.getElementById('overnameSection');
+  const blokEl = document.getElementById('overnameBlok');
+  if(!toggleBtn || !sectionEl || !blokEl) return;
+  const vandaagIso = iso(vandaag);
+  if(vandaagIso > OVERNAME_TOT){
+    toggleBtn.style.display = "none";
+    sectionEl.style.display = "none";
+    return;
+  }
+  toggleBtn.style.display = "block";
+  sectionEl.style.display = overnameOpen ? "block" : "none";
+  if(!overnameOpen) return;
+
+  const naam = overnameNaamInput.value.trim();
+
+  blokEl.innerHTML = OVERNAME_EVENTS.map(ev=>{
+    const reacties = data.overname[ev.key] || {};
+    const kan = Object.entries(reacties).filter(([n,v])=>v===true).map(([n])=>n);
+    const kanNiet = Object.entries(reacties).filter(([n,v])=>v===false).map(([n])=>n);
+    const actief = naam && reacties[naam];
+    const actiefJa = actief === true;
+    const actiefNee = actief === false;
+    return `
+      <div class="overname-event">
+        <div class="overname-event-head">
+          <strong>${ev.label}</strong>
+          <span>${fmtOvernameDatum(ev.datum)} · ${ev.tijd} · ${ev.locatie}</span>
+        </div>
+        <div class="toggle">
+          <button class="komt ${actiefJa?'active':''}" ${!naam?'disabled':''} data-overkey="${ev.key}" data-overval="true">Ik kan overnemen</button>
+          <button class="niet ${actiefNee?'active':''}" ${!naam?'disabled':''} data-overkey="${ev.key}" data-overval="false">Ik kan niet</button>
+        </div>
+        <div class="lijst">
+          ${kan.length ? "Kan: " + kan.map(n=>`<span class="naam">${n}</span>`).join(", ") : "Nog niemand die kan."}
+          ${kanNiet.length ? "<br>Kan niet: " + kanNiet.map(n=>`<span class="naam niet">${n}</span>`).join(", ") : ""}
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  blokEl.querySelectorAll('.toggle button').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const huidigeNaam = overnameNaamInput.value.trim();
+      if(!huidigeNaam) return;
+      const key = btn.dataset.overkey;
+      const val = btn.dataset.overval === "true";
+      if(!data.overname[key]) data.overname[key] = {};
+      data.overname[key][huidigeNaam] = val;
+      setStatus("Opslaan…");
+      renderOvername();
+      try{
+        await saveBlob();
+        setStatus("Opgeslagen ✓");
+      }catch(e){
+        setStatus("Opslaan mislukt: " + e.message);
+      }
+    });
+  });
+}
+
+
 function volgendeWedstrijd(){
   const vandaagIso = iso(vandaag);
   return wedstrijdSchema.find(w => w.date >= vandaagIso) || null;
@@ -386,11 +541,12 @@ events.sort((a,b) => a.datum - b.datum);
 
 const VASTE_NAMEN = ["Jovana","Moira","Senna","Annabelle","Angelina","Eva","Minne","Esra"];
 
-let data = { children: [], attendance: {}, redenen: {} };
+let data = { children: [], attendance: {}, redenen: {}, overname: {} };
 const statusEl = document.getElementById('status');
 const childInput = document.getElementById('childInput');
 const nieuweNaamInput = document.getElementById('nieuweNaamInput');
 const eventsEl = document.getElementById('events');
+const overnameNaamInput = document.getElementById('overnameNaamInput');
 
 function setStatus(msg){ statusEl.textContent = msg; }
 
@@ -398,7 +554,7 @@ async function loadBlob(id){
   const res = await fetch(DB_URL + "/aanwezigheid/" + id + ".json");
   if(!res.ok) throw new Error("niet gevonden: status " + res.status);
   const json = await res.json();
-  return json || { children: [], attendance: {}, redenen: {} };
+  return json || { children: [], attendance: {}, redenen: {}, overname: {} };
 }
 
 async function saveBlob(){
@@ -547,6 +703,17 @@ childInput.addEventListener('change', ()=>{
 });
 nieuweNaamInput.addEventListener('input', renderEvents);
 
+overnameNaamInput.value = localStorage.getItem('overnameNaam') || "";
+overnameNaamInput.addEventListener('input', ()=>{
+  localStorage.setItem('overnameNaam', overnameNaamInput.value.trim());
+  renderOvername();
+});
+
+document.getElementById('overnameToggle').addEventListener('click', ()=>{
+  overnameOpen = !overnameOpen;
+  renderOvername();
+});
+
 async function init(){
   data.children = [...VASTE_NAMEN];
   try{
@@ -554,8 +721,10 @@ async function init(){
     const geladen = await loadBlob(blobId);
     if(!geladen.attendance) geladen.attendance = {};
     if(!geladen.redenen) geladen.redenen = {};
+    if(!geladen.overname) geladen.overname = {};
     data.attendance = geladen.attendance;
     data.redenen = geladen.redenen;
+    data.overname = geladen.overname;
     data.children = Array.from(new Set([...VASTE_NAMEN, ...(geladen.children||[])]));
     setStatus("");
   }catch(e){
@@ -563,6 +732,7 @@ async function init(){
   }
   renderChildNames();
   renderEvents();
+  renderOvername();
 }
 
 const themeToggle = document.getElementById('themeToggle');
